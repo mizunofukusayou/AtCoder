@@ -2,3 +2,7 @@
 	path = .docs/cpprefjp
 	url = git@github.com:cpprefjp/cpprefjp.github.io.git
 	shallow = true
+[submodule "library/live_library"]
+	path = library/live_library
+	url = git@github.com:atcoder/live_library.git
+	shallow = true
