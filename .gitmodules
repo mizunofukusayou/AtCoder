@@ -1,0 +1,4 @@
+[submodule ".docs/cpprefjp"]
+	path = .docs/cpprefjp
+	url = git@github.com:cpprefjp/cpprefjp.github.io.git
+	shallow = true

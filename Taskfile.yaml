@@ -17,7 +17,7 @@ tasks:
     cmd: open './.docs/AtCoder Library/index.html'
 
   cpp:
-    cmd: open './.docs/cpprefjp.github.io-master/article.html'
+    cmd: open './.docs/cpprefjp/article.html'
 
   combine:
     desc: "ACLのexpander.pyを使ってヘッダーファイルを展開します"
