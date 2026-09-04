@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>線形漸化式・行列演算の高速化まとめ (Kitamasa / Bostan-Mori)</title>
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <!-- Highlight.js for code styling -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --highlight: #f59e0b;
+      --highlight-dim: rgba(245, 158, 11, 0.15);
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 3rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 2.2rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      color: #f1f5f9;
+      margin: 1.5rem 0 0.5rem;
+    }
+    p { margin-bottom: 1rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    li { margin-bottom: 0.4rem; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .trouble-spot {
+      border-left: 4px solid var(--highlight);
+      background: var(--highlight-dim);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.25rem 0;
+    }
+    .trouble-spot-title {
+      font-weight: bold;
+      color: var(--highlight);
+      margin-bottom: 0.25rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    th {
+      background-color: #0b1120;
+      color: var(--accent);
+    }
+    tr:nth-child(even) {
+      background-color: rgba(255,255,255,0.02);
+    }
+    pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid var(--border);
+    }
+    code:not(pre code) {
+      background-color: rgba(255,255,255,0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9em;
+      color: #38bdf8;
+    }
+    .step-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      padding: 0.1rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      margin-right: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>線形漸化式・行列演算 高速化まとめ</h1>
+    <p class="subtitle">低レイヤ最適化から Kitamasa法・Bostan-Mori法、つまずきポイントの完全整理</p>
+  </header>
+
+  <!-- Section 1: 低レイヤ最適化 -->
+  <section class="card">
+    <h2>1. メモリ構造と低レイヤ最適化</h2>
+    <p>競プロで頻出の $N \times N$ 行列積 $C_{i,j} = \sum_k A_{i,k} B_{k,j}$ を高速化するハードウェア寄りのアプローチです。</p>
+
+    <div class="trouble-spot">
+      <div class="trouble-spot-title">💡 なぜ <code>vector&lt;vector&lt;T&gt;&gt;</code> は遅く、<code>array</code> や静的配列は速いのか？</div>
+      <ul>
+        <li><strong><code>vector&lt;vector&lt;T&gt;&gt;</code>（ポインタの配列）:</strong> 外側の配列が保持するのは「各行のベクトルのアドレス」です。データがヒープ上に散らばるため、<code>mat[i][j]</code> のアクセス時に <strong>二重のポインタ参照</strong> が発生し、キャッシュミスが多発します。</li>
+        <li><strong><code>array&lt;array&lt;T, N&gt;, N&gt;</code> / <code>T mat[N][N]</code>:</strong> 全 $N \times N$ 要素がメモリ上に <strong>1つの連続ブロック</strong> として並びます。<code>base + sizeof(T)*(i*N + j)</code> という掛け算1発でアドレスが決まり、間接参照がゼロになります。</li>
+      </ul>
+    </div>
+
+    <h3>SIMD (Single Instruction, Multiple Data)</h3>
+    <p>CPUが1つの命令で複数のデータ（例: 256bit レジスタで 64bit 整数なら 4 個、32bit 整数なら 8 個）を同時に並列計算する仕組みです。ループが連続メモリにアクセスしていれば、コンパイラが自動で SIMD 命令（AVX2等）に変換（自動ベクトル化）してくれます。</p>
+
+    <h3>転置行列 $B^T$ を用意する理由</h3>
+    <p>標準的な行列積では $B$ の「列方向（縦）」にアクセスするため飛び飛びになります。あらかじめ $B$ を転置しておくと、$A$ の行と $B^T$ の行という <strong>「行同士（連続メモリ）の内積」</strong> になり、SIMDロード命令（<code>_mm256_loadu_si256</code> 等）が綺麗にハマります。</p>
+  </section>
+
+  <!-- Section 2: 遷移行列と課題 -->
+  <section class="card">
+    <h2>2. 遷移行列とサイズ $d$ の壁</h2>
+    <p><strong>遷移行列</strong> とは、「現在の状態ベクトル」に掛けることで「1ステップ先の状態」に進めるための正方行列です。</p>
+    
+    <div class="trouble-spot">
+      <div class="trouble-spot-title">💡 遷移行列の具体例（フィボナッチ数列）</div>
+      $$\begin{pmatrix} F_{n+1} \\ F_n \end{pmatrix} = \begin{pmatrix} 1 & 1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} F_n \\ F_{n-1} \end{pmatrix}$$
+      $K$ ステップ進めるには遷移行列を $K$ 乗すればよく、繰り返し二乗法で $O(d^3 \log K)$ で計算できます。
+    </div>
+
+    <h3>行列累乗の限界</h3>
+    <p>漸化式の項数（状態数）が $d = 1000$ になると、行列の掛け算 1 回あたり $d^3 = 10^9$ 回（約10億回）の計算が発生し、TL（実行時間制限）に間に合いません。そこで **「巨大な行列を作らずに第 $K$ 項だけを直接求めるアルゴリズム」** が必要になります。</p>
+  </section>
+
+  <!-- Section 3: アルゴリズムの直感 -->
+  <section class="card">
+    <h2>3. 2大高速化アルゴリズムの直感</h2>
+
+    <h3>① Kitamasa法：文字式の整理（$O(d^2 \log K)$）</h3>
+    <p>ケイリー・ハミルトンの定理（$A$ は自身の固有多項式を満たす）を利用し、$A^K$ を計算する代わりに <strong>$x^K \bmod P(x)$</strong> という多項式の剰余を計算します。</p>
+    <p>フィボナッチなら $A^2 = A + I$ を使って、$A^3 = 2A + I, \ A^4 = 3A + 2I \dots$ と、どんな高次項も常に「$d$ 個の係数（一次結合）」にまとめ直して計算を高速化します。</p>
+
+    <h3>② Bostan-Mori法：母関数の縮約（$O(d \log d \log K)$ / $O(d^2 \log K)$）</h3>
+    <p>母関数 $\frac{P(x)}{Q(x)}$ に対し、分母を偶数次の多項式に変形することで、<strong>求めたいインデックス $K$ を毎ステップ $K \leftarrow \lfloor K/2 \rfloor$ と半減させていく</strong> アルゴリズムです。</p>
+  </section>
+
+  <!-- Section 4: つまずきやすいポイントの深掘り -->
+  <section class="card">
+    <h2>4. 母関数と有理化のカラクリ（つまずきポイント解説）</h2>
+
+    <div class="trouble-spot">
+      <div class="trouble-spot-title">❓ 疑問1: フィボナッチの母関数で、引き算するとどうして $x$ だけが残るのか？</div>
+      次数の列を縦に揃えて引き算を考えると一目瞭然です。
+      $$\begin{aligned}       F(x)   &= \mathbf{0} + \mathbf{1}x + 1x^2 + 2x^3 + 3x^4 + \dots \\       xF(x)  &= \phantom{0 + } \mathbf{0}x + 1x^2 + 1x^3 + 2x^4 + \dots \quad \text{($x^1$の係数は $0$)} \\       x^2F(x)&= \phantom{0 + 0x + } 0x^2 + 1x^3 + 1x^4 + \dots       \end{aligned}$$
+      上から下の2行を引くと：
+      <ul>
+        <li>$x^0$ の項: $0 - 0 = 0$</li>
+        <li>$x^1$ の項: $1x - 0x = \mathbf{1x}$（$F(x)$ の $1x$ がそのまま残る）</li>
+        <li>$x^2$ 以降: すべて $F_n - F_{n-1} - F_{n-2} = 0$ となり相殺して消滅する</li>
+      </ul>
+      結果として $(1 - x - x^2)F(x) = x \implies F(x) = \frac{x}{1 - x - x^2}$ となります。
+    </div>
+
+    <div class="trouble-spot">
+      <div class="trouble-spot-title">❓ 疑問2: なぜ $Q(-x)$ を掛けると偶数乗だけになるのか？</div>
+      高校数学の <strong>「ルートの有理化」</strong> と同じ原理です。
+      $$(a - b)(a + b) = a^2 - b^2$$
+      $Q(x)$ と $Q(-x)$ を掛けると、符号が反転する奇数次の項がすべて相殺され、2乗された $x^2$ の項（偶数次項）しか残りません。
+      <br><br>
+      分母が $D(x^2)$ と偶数乗の塊になれば、分子 $P(x)Q(-x)$ のうち：
+      <ul>
+        <li>$K$ が偶数なら <strong>偶数次の項</strong> だけを取り出す $\to [t^{K/2}]$ の問題へ縮小</li>
+        <li>$K$ が奇数なら <strong>奇数次の項</strong> だけを取り出す $\to [t^{(K-1)/2}]$ の問題へ縮小</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Section 5: 実装コード -->
+  <section class="card">
+    <h2>5. Bostan-Mori法 実装テンプレート (C++)</h2>
+    <p>線形漸化式 $a_n = \sum_{i=1}^d c_i a_{n-i}$ と初期値から第 $K$ 項を求める完成版コードです。</p>
+
+    <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+using ll = long long;
+const ll MOD = 998244353;
+
+// 多項式乗算 (愚直 O(d^2) / NTTを使えば O(d log d))
+vector&lt;ll&gt; multiply(const vector&lt;ll&gt;&amp; A, const vector&lt;ll&gt;&amp; B) {
+    vector&lt;ll&gt; C(A.size() + B.size() - 1, 0);
+    for (size_t i = 0; i &lt; A.size(); ++i) {
+        for (size_t j = 0; j &lt; B.size(); ++j) {
+            C[i + j] = (C[i + j] + A[i] * B[j]) % MOD;
+        }
+    }
+    return C;
+}
+
+// Bostan-Mori法: [x^K] (P(x) / Q(x)) を求める
+ll bostan_mori(vector&lt;ll&gt; P, vector&lt;ll&gt; Q, ll K) {
+    while (K &gt; 0) {
+        // 1. Q(-x) を構築（奇数次の項の符号を反転）
+        vector&lt;ll&gt; Q_neg = Q;
+        for (size_t i = 1; i &lt; Q_neg.size(); i += 2) {
+            Q_neg[i] = (MOD - Q_neg[i]) % MOD;
+        }
+
+        // 2. 分母・分子に Q(-x) を掛ける（有理化）
+        vector&lt;ll&gt; num = multiply(P, Q_neg);
+        vector&lt;ll&gt; den = multiply(Q, Q_neg);
+
+        // 3. Kの偶奇に応じて必要な項のみを抽出し、K を半分にする
+        vector&lt;ll&gt; next_P, next_Q;
+        for (size_t i = (K &amp; 1); i &lt; num.size(); i += 2) {
+            next_P.push_back(num[i]);
+        }
+        for (size_t i = 0; i &lt; den.size(); i += 2) {
+            next_Q.push_back(den[i]);
+        }
+
+        P = move(next_P);
+        Q = move(next_Q);
+        K &gt;&gt;= 1;
+    }
+    return P.empty() ? 0 : P[0];
+}
+
+// 線形漸化式ソルバー
+// a_n = c[0]*a_{n-1} + c[1]*a_{n-2} + ... + c[d-1]*a_{n-d}
+ll solve_linear_recurrence(const vector&lt;ll&gt;&amp; c, const vector&lt;ll&gt;&amp; a, ll K) {
+    int d = c.size();
+    if (K &lt; d) return a[K];
+
+    // Q(x) = 1 - c_1*x - c_2*x^2 - ... - c_d*x^d
+    vector&lt;ll&gt; Q(d + 1);
+    Q[0] = 1;
+    for (int i = 0; i &lt; d; ++i) {
+        Q[i + 1] = (MOD - (c[i] % MOD)) % MOD;
+    }
+
+    // P(x) = (A(x) * Q(x)) mod x^d
+    vector&lt;ll&gt; P(d, 0);
+    for (int i = 0; i &lt; d; ++i) {
+        for (int j = 0; j &lt;= d &amp;&amp; i + j &lt; d; ++j) {
+            P[i + j] = (P[i + j] + a[i] * Q[j]) % MOD;
+        }
+    }
+
+    return bostan_mori(P, Q, K);
+}
+</code></pre>
+  </section>
+
+  <!-- Section 6: 手法比較表 -->
+  <section class="card">
+    <h2>6. 手法の比較と使い分けまとめ</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>手法</th>
+          <th>計算量</th>
+          <th>適用目安</th>
+          <th>メリット / デメリット</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>行列累乗</strong></td>
+          <td>$O(d^3 \log K)$</td>
+          <td>$d \le 100$</td>
+          <td>グラフのパス数え上げなど、状態遷移自体が行列の形で与えられるときに自然。</td>
+        </tr>
+        <tr>
+          <td><strong>Kitamasa法</strong></td>
+          <td>$O(d^2 \log K)$</td>
+          <td>$d \le 4000$</td>
+          <td>多項式の除算・剰余が必要なため、実装の添字管理がやや重い。</td>
+        </tr>
+        <tr>
+          <td><strong>Bostan-Mori法</strong></td>
+          <td>$O(d^2 \log K)$<br>$(O(d \log d \log K))$</td>
+          <td>$d \le 10^5$ (NTT時)</td>
+          <td><strong>推奨</strong>。多項式乗算と要素のスキップ抽出だけで書けるため、実装が短く最も高速。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+</body>
+</html>

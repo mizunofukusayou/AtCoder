@@ -1,0 +1,36 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "clang++ デバッグ用コンパイル",
+            "command": "/usr/bin/clang++",
+            "args": [
+                "-fsanitize=undefined,address",
+                "-fno-sanitize-recover=all",
+                "-fcolor-diagnostics",
+                "-fansi-escape-codes",
+                "-Wall",
+                "-Wextra",
+                "-Wshadow",
+                "-Wno-unqualified-std-cast-call", // std::の省略に関する警告を無視(ACLで使われている)
+                "-std=gnu++2b",
+                "-I",
+                ".include",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/a.out"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": ["$gcc"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "表示中のファイルをデバッグ用にコンパイルします。"
+        }
+    ],
+    "version": "2.0.0"
+}

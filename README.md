@@ -13,6 +13,6 @@ git submodule update --remote --recursive
 
 設定
 ```bash
-git submodule add <リポジトリのURL> <パス>
+git submodule add --depth 1 <リポジトリのURL> <パス>
 git config -f .gitmodules submodule.<パス>.shallow true
 ```

@@ -25,3 +25,19 @@ tasks:
       引数に指定したC++のソースコードに、.include/ 内のACLを埋め込みます。
       使用例: task combine -- main.cpp
     cmd: python3 .docs/AtCoder\ Library/expander.py {{.CLI_ARGS}} --lib .include
+
+  submodule:
+    desc: "Add a git submodule with shallow clone enabled (Usage: task submodule -- <URL> <PATH>)"
+    cmd: |
+      set -- {{.CLI_ARGS}}
+      URL="$1"
+      PATH_DIR="$2"
+
+      if [ -z "$URL" ] \vert{}\vert{} [ -z "$PATH_DIR" ]; then
+        echo "Error: URL and PATH are required."
+        echo "Usage: task submodule -- <URL> <PATH>"
+        exit 1
+      fi
+
+      git submodule add --depth 1 "$URL" "$PATH_DIR"
+      git config -f .gitmodules "submodule.$PATH_DIR.shallow" true

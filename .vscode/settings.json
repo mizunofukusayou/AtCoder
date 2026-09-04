@@ -1,0 +1,11 @@
+{
+    "github.copilot.enable": {
+        "*": false,
+        "scminput": false
+    },
+    "files.exclude": {
+        // ".vendor": true,
+        // ".include": true,
+        // "Document": true,
+    }
+}
