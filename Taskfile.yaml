@@ -1,0 +1,27 @@
+version: "3"
+
+tasks:
+  default:
+    deps: [run]
+
+  run:
+    cmd: pbpaste | ./a.out
+
+  init:
+    cmds:
+      [
+        "targets=\"{{.CLI_ARGS}}\"\nif [ -z \"$targets\" ]; then\n  targets=\"a b c d e f g\"\nfi\nfor name in $targets; do\n  cp tmpl.cpp \"${name}.cpp\"\ndone\n",
+      ]
+
+  atcoder:
+    cmd: open './.docs/AtCoder Library/index.html'
+
+  cpp:
+    cmd: open './.docs/cpprefjp.github.io-master/article.html'
+
+  combine:
+    desc: "ACLのexpander.pyを使ってヘッダーファイルを展開します"
+    summary: |
+      引数に指定したC++のソースコードに、.include/ 内のACLを埋め込みます。
+      使用例: task combine -- main.cpp
+    cmd: python3 .docs/AtCoder\ Library/expander.py {{.CLI_ARGS}} --lib .include
