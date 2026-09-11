@@ -22,7 +22,7 @@ local function run_cpp(update_input)
 	end
 
 	local cmd
-	local file = vim.fn.expand("%")
+	local file = vim.fn.expand("%:p")
 
 	if vim.fn.getftime(root .. "/a.out") >= vim.fn.getftime(file) then
 		cmd = "./a.out < input.txt"
