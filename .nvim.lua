@@ -91,12 +91,17 @@ vim.keymap.set("n", "<leader>fl", function()
 	})
 end, { desc = "Find Library Files" })
 
--- <leader>ini でファイルを初期化
-vim.keymap.set("n", "<leader>ini", function()
+-- <leader>ti でファイルを初期化
+vim.keymap.set("n", "<leader>ti", function()
 	local tmpl = vim.fn.expand(root .. "/tmpl.cpp")
 	if vim.fn.filereadable(tmpl) == 1 then
 		local lines = vim.fn.readfile(tmpl)
 		vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+		vim.cmd("update")
+		vim.fn.cursor(1, 1)
+		vim.fn.search([[void\s\+solve]])
+		vim.cmd(vim.api.nvim_replace_termcodes("normal! f{", true, false, true))
+		-- vim.cmd(vim.api.nvim_replace_termcodes("normal! gg/void solve<CR>f{", true, false, true))
 	else
 		vim.notify("テンプレートファイルが見つかりません: " .. tmpl, vim.log.levels.WARN)
 	end
