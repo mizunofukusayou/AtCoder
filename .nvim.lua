@@ -30,7 +30,6 @@ local function run_cpp(update_input)
 			"-Wextra", -- 追加の警告を有効化
 			"-Wshadow", -- 変数のシャドウイングを警告
 			"-Wno-unused-const-variable", -- 未使用const変数の警告無視
-			"-Wno-unqualified-std-cast-call", -- std::move/forward修飾警告の無視(ACL対策)
 			"-g", -- デバッグ情報を付与
 			"-oa.out",
 		}
