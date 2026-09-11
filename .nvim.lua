@@ -1,6 +1,13 @@
 vim.g.mapleader = " "
 
 local root = vim.env.ROOT
+if not root or root == "" then
+	vim.notify("環境変数 ROOT が設定されていません。", vim.log.levels.ERROR, { title = "Config Error" })
+	root = nil
+elseif vim.fn.isdirectory(root) ~= 1 then
+	vim.notify("ROOT の実体が存在しません: " .. root, vim.log.levels.ERROR, { title = "Config Error" })
+	root = nil
+end
 
 local function run_cpp(update_input)
 	vim.cmd("update")
