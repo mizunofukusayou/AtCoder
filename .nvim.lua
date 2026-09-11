@@ -47,3 +47,34 @@ end, { desc = "Run C++ with updating input.txt" })
 vim.keymap.set("n", "<leader>jk", function()
 	run_cpp(false)
 end, { desc = "Run C++ with existing input.txt" })
+
+-- ファイル走査の設定
+local snacks = require("snacks")
+
+-- このディレクトリ内での files 検索のデフォルト挙動を上書き
+snacks.config.picker = snacks.config.picker or {}
+snacks.config.picker.sources = snacks.config.picker.sources or {}
+snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.picker.sources.files or {}, {
+	ignored = true, -- .gitignore された a.cpp などを表示
+	hidden = false, -- .git, .direnv などのドットファイルは隠す
+	exclude = {
+		"README.md",
+		"a.out",
+		"a.out.dSYM",
+		"input.txt",
+		".direnv",
+		".vscode",
+		".include",
+		".docs",
+		"flake.lock",
+		"library",
+	},
+})
+
+-- <leader>fl で library 走査
+vim.keymap.set("n", "<leader>fl", function()
+	snacks.picker.files({
+		cwd = vim.fn.getcwd() .. "/library",
+		hidden = false,
+	})
+end, { desc = "Find Library Files" })
