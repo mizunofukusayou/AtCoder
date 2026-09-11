@@ -1,7 +1,9 @@
 vim.g.mapleader = " "
 
+local root = vim.env.ROOT
+
 local function run_cpp(update_input)
-	vim.cmd("write")
+	vim.cmd("update")
 
 	if update_input then
 		local input = vim.fn.getreg("+")
@@ -12,28 +14,33 @@ local function run_cpp(update_input)
 		end
 	end
 
-	local flags = {
-		"-isystem.include",
-		"-std=gnu++23",
-		"-fsanitize=undefined,address", -- 未定義動作・メモリ不正アクセスの検知
-		"-fno-sanitize-recover=all", -- サニタイザエラー発生時に即座に停止
-		"-fcolor-diagnostics", -- エラー・警告メッセージの色分け表示
-		"-fansi-escape-codes",
-		"-Wall", -- 基本的な警告を有効化
-		"-Wextra", -- 追加の警告を有効化
-		"-Wshadow", -- 変数のシャドウイングを警告
-		"-Wno-unused-const-variable", -- 未使用const変数の警告無視
-		"-Wno-unqualified-std-cast-call", -- std::move/forward修飾警告の無視(ACL対策)
-		"-g", -- デバッグ情報を付与
-		"-oa.out",
-	}
-
+	local cmd
 	local file = vim.fn.expand("%")
-	local cmd =
-		string.format("clang++ %s %s && ./a.out < input.txt", table.concat(flags, " "), vim.fn.shellescape(file))
-	-- vim.cmd("botright 12split | terminal " .. cmd)
+
+	if vim.fn.getftime(root .. "/a.out") >= vim.fn.getftime(file) then
+		cmd = "./a.out < input.txt"
+	else
+		local flags = {
+			"-isystem.include",
+			"-std=gnu++23",
+			"-fsanitize=undefined,address", -- 未定義動作・メモリ不正アクセスの検知
+			"-fno-sanitize-recover=all", -- サニタイザエラー発生時に即座に停止
+			"-fcolor-diagnostics", -- エラー・警告メッセージの色分け表示
+			"-fansi-escape-codes",
+			"-Wall", -- 基本的な警告を有効化
+			"-Wextra", -- 追加の警告を有効化
+			"-Wshadow", -- 変数のシャドウイングを警告
+			"-Wno-unused-const-variable", -- 未使用const変数の警告無視
+			"-Wno-unqualified-std-cast-call", -- std::move/forward修飾警告の無視(ACL対策)
+			"-g", -- デバッグ情報を付与
+			"-oa.out",
+		}
+
+		cmd = string.format("clang++ %s %s && ./a.out < input.txt", table.concat(flags, " "), vim.fn.shellescape(file))
+	end
+
 	Snacks.terminal.open(cmd, {
-		cwd = vim.fn.expand("%:p:h"), -- 編集中のファイルがあるディレクトリ
+		cwd = root,
 		auto_close = false,
 	})
 end
@@ -74,7 +81,7 @@ snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.
 -- <leader>fl で library 走査
 vim.keymap.set("n", "<leader>fl", function()
 	snacks.picker.files({
-		cwd = vim.fn.getcwd() .. "/library",
+		cwd = root .. "/library",
 		hidden = false,
 	})
 end, { desc = "Find Library Files" })

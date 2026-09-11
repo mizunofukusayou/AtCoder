@@ -20,6 +20,9 @@
           packages = with pkgs; [
             go-task
           ];
+          shellHook = ''
+            export ROOT=$(pwd)
+          '';
         };
       });
     };
