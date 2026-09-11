@@ -21,7 +21,6 @@ local function run_cpp(update_input)
 		cmd = "./a.out < input.txt"
 	else
 		local flags = {
-			"-isystem.include",
 			"-std=gnu++23",
 			"-fsanitize=undefined,address", -- 未定義動作・メモリ不正アクセスの検知
 			"-fno-sanitize-recover=all", -- サニタイザエラー発生時に即座に停止
@@ -72,7 +71,7 @@ snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.
 		".direnv",
 		".vscode",
 		".include",
-		".docs",
+		"docs",
 		"flake.lock",
 		"library",
 	},
