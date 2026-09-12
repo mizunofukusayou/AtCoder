@@ -106,3 +106,6 @@ vim.keymap.set("n", "<leader>ti", function()
 		vim.notify("テンプレートファイルが見つかりません: " .. tmpl, vim.log.levels.WARN)
 	end
 end, { desc = "Init cpp file" })
+
+-- <leader>kk でコードをコピー
+vim.keymap.set("n", "<leader>kk", "<cmd>%yank +<CR>", { desc = "Copy file" })
