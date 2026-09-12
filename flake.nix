@@ -23,6 +23,10 @@
           name = "acl";
           data = "https://atcoder.github.io/ac-library/production/document_ja";
         }
+        {
+          name = "live_library";
+          data = "https://github.com/atcoder/live_library/blob/master/README.md";
+        }
       ];
     in
     {
