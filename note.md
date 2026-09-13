@@ -150,3 +150,7 @@ $$
 
 $L_\infty -> L_1$ : 各軸を独立に分解する
 $L_1 -> L_\infty$ : 領域を軸に並行な長方形にする。
+
+## live_library
+
+- `using P = pair<int, int>`を前提とすることがある。
