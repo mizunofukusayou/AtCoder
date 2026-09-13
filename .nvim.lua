@@ -1,5 +1,7 @@
 vim.g.mapleader = " "
 
+local snacks = require("snacks")
+
 local root = vim.env.ROOT
 if not root or root == "" then
 	vim.notify("環境変数 ROOT が設定されていません。", vim.log.levels.ERROR, { title = "Config Error" })
@@ -8,6 +10,26 @@ elseif vim.fn.isdirectory(root) ~= 1 then
 	vim.notify("ROOT の実体が存在しません: " .. root, vim.log.levels.ERROR, { title = "Config Error" })
 	root = nil
 end
+
+-- このディレクトリ内での files 検索のデフォルト挙動を上書き
+snacks.config.picker = snacks.config.picker or {}
+snacks.config.picker.sources = snacks.config.picker.sources or {}
+snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.picker.sources.files or {}, {
+	ignored = true, -- .gitignore された a.cpp などを表示
+	hidden = false, -- .git, .direnv などのドットファイルは隠す
+	exclude = {
+		"README.md",
+		"a.out",
+		"a.out.dSYM",
+		"input.txt",
+		".direnv",
+		".vscode",
+		".include",
+		"docs",
+		"flake.lock",
+		"library",
+	},
+})
 
 local function run_cpp(update_input)
 	vim.cmd("update")
@@ -40,7 +62,6 @@ local function run_cpp(update_input)
 			"-g", -- デバッグ情報を付与
 			"-oa.out",
 		}
-
 		cmd = string.format("clang++ %s %s && ./a.out < input.txt", table.concat(flags, " "), vim.fn.shellescape(file))
 	end
 
@@ -60,29 +81,6 @@ vim.keymap.set("n", "<leader>jk", function()
 	run_cpp(false)
 end, { desc = "Run C++ with existing input.txt" })
 
--- ファイル走査の設定
-local snacks = require("snacks")
-
--- このディレクトリ内での files 検索のデフォルト挙動を上書き
-snacks.config.picker = snacks.config.picker or {}
-snacks.config.picker.sources = snacks.config.picker.sources or {}
-snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.picker.sources.files or {}, {
-	ignored = true, -- .gitignore された a.cpp などを表示
-	hidden = false, -- .git, .direnv などのドットファイルは隠す
-	exclude = {
-		"README.md",
-		"a.out",
-		"a.out.dSYM",
-		"input.txt",
-		".direnv",
-		".vscode",
-		".include",
-		"docs",
-		"flake.lock",
-		"library",
-	},
-})
-
 -- <leader>fl で library 走査
 vim.keymap.set("n", "<leader>fl", function()
 	snacks.picker.files({
@@ -101,7 +99,6 @@ vim.keymap.set("n", "<leader>ti", function()
 		vim.fn.cursor(1, 1)
 		vim.fn.search([[void\s\+solve]])
 		vim.cmd(vim.api.nvim_replace_termcodes("normal! f{", true, false, true))
-		-- vim.cmd(vim.api.nvim_replace_termcodes("normal! gg/void solve<CR>f{", true, false, true))
 	else
 		vim.notify("テンプレートファイルが見つかりません: " .. tmpl, vim.log.levels.WARN)
 	end
