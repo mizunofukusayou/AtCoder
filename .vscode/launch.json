@@ -7,6 +7,7 @@
             "request": "launch",
             "program": "${fileDirname}/a.out",
             "args": [],
+            "stdio": ["${fileDirname}/input.txt", null, null],
             "env": {
                 "UBSAN_OPTIONS": "abort_on_error=1:print_stacktrace=1",
                 "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=0"
