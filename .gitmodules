@@ -1,0 +1,8 @@
+[submodule "library/live_library"]
+	path = library/live_library
+	url = git@github.com:atcoder/live_library.git
+	shallow = true
+[submodule "library/mizunofukusayou"]
+	path = library/mizunofukusayou
+	url = git@github.com:mizunofukusayou/kyopuro-library.git
+	shallow = true

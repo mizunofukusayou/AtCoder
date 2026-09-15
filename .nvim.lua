@@ -26,6 +26,7 @@ snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.
 		".vscode",
 		".include",
 		".gitignore",
+		".gitmodules",
 		".DS_Store",
 		".envrc",
 		"docs",
