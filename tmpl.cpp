@@ -37,6 +37,10 @@ void co(Args&&... args) {
     int i = 0;
     ((cout << (i++ ? " " : "") << args), ...) << '\n';
 }
+
+template<typename T> void print_vec(const vector<T> &v, bool split_line=false) {
+    for (int i = 0; i < (int)v.size(); i++) cout << v[i] << " \n"[split_line || i+1==(int)v.size()];
+}
 // clang-format on
 
 void solve() {}
