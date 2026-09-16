@@ -110,3 +110,28 @@ end, { desc = "Init cpp file" })
 
 -- <leader>kk でコードをコピー
 vim.keymap.set("n", "<leader>kk", "<cmd>%yank +<CR>", { desc = "Copy file" })
+
+-- <leader>ppでファイルを上書き
+vim.keymap.set("n", "<leader>pp", function()
+	local items = { "clipboard" }
+	vim.list_extend(items, vim.fn.glob(root .. "/[a-z].cpp", false, true))
+
+	vim.ui.select(items, {
+		prompt = "Overwrite from: ",
+	}, function(choice)
+		if not choice then
+			return
+		end
+
+		local lines
+
+		if choice == "clipboard" then
+			lines = vim.fn.getreg("+", 1, true)
+		else
+			lines = vim.fn.readfile(choice)
+		end
+
+		vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+		vim.cmd("update")
+	end)
+end, { desc = "Overwrite current file" })
