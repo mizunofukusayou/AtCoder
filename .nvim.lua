@@ -19,6 +19,7 @@ snacks.config.picker.sources.files = vim.tbl_deep_extend("force", snacks.config.
 	hidden = true, -- .git, .direnv などのドットファイルを表示
 	exclude = {
 		".DS_Store",
+		".clangd",
 		".direnv",
 		".envrc",
 		".gitignore",
