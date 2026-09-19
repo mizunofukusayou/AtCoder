@@ -44,6 +44,9 @@ template<typename T> void print_vec(const vector<T> &v, bool split_line=false) {
 }
 
 template<typename T> T ceil(T a, T b) { return (a + (b - 1)) / b; }
+
+#define Yes(b) (b ? co("Yes") : co("No"))
+#define YES(b) (b ? co("YES") : co("NO"))
 // clang-format on
 
 void solve() {}
