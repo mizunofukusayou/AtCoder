@@ -22,6 +22,7 @@ const ll INF = 1LL << 60;
 #define REP1(i, x) for (ll i = 0; (i) < (x); ++(i))
 #define REP2(i, l, r) for (ll i = (l); (i) < (r); ++(i))
 #define REP3(i, l, r, c) for (ll i = (l); ((c) > 0 ? (i) < (r) : (i) > (r)); i += (c))
+// #define erep(i, v, r) for (auto [i, v] : (r) | std::views::enumerate)
 
 template <typename... Args> void in(Args &...args) { (std::cin >> ... >> args); }
 #define LL(...) ll __VA_ARGS__; in(__VA_ARGS__)
