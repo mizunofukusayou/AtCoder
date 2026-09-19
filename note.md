@@ -160,3 +160,8 @@ $L_1 -> L_\infty$ : 領域を軸に並行な長方形にする。
 - if文を使う代わりに、`bool`をそのまま四則演算に用いるようにすると、最適化を維持しやすい。
   - `if(a == 2) ++ans;`よりも`ans += (a == 2)`
   - `if(a == 2 && b == 3) ++ ans;`よりも`ans += (a == 2) & (b == 3)`
+
+## 452
+
+- `std::accumulate` の改善版として `ranges::fold_left` がある。
+  - [使用例](https://atcoder.jp/contests/abc452/editorial/18360)
