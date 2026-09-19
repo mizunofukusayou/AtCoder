@@ -26,8 +26,8 @@ const ll INF = 1LL << 60;
 template <typename... Args> void in(Args &...args) { (std::cin >> ... >> args); }
 #define LL(...) ll __VA_ARGS__; in(__VA_ARGS__)
 #define STR(...) string __VA_ARGS__; in(__VA_ARGS__)
-#define VEC(type, name, size) vc<type> name(size); for (auto &x_ : name) in(x_)
-#define VL(name, size) VEC(ll, name, size)
+#define VC(type, name, size) vc<type> name(size); for (auto &x_ : name) in(x_)
+#define VL(name, size) VC(ll, name, size)
 
 template<typename T> bool chmin(T& a, T b){if(a > b){a = b; return true;} return false;}
 template<typename T> bool chmax(T& a, T b){if(a < b){a = b; return true;} return false;}
