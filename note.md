@@ -142,14 +142,45 @@ $L_1$ : $|x| + |y|$
 $$
 \begin{cases}
   X = x + y \\
-  Y = x - y
+  Y = -x + y
 \end{cases}
 $$
 
-の変換をすることで、問題を単純にできることがある。
+の変換をすることで（ $-\pi/4$ 回転）、問題を単純にできることがある。
 
-$L_\infty -> L_1$ : 各軸を独立に分解する
-$L_1 -> L_\infty$ : 領域を軸に並行な長方形にする。
+$L_\infty \to L_1$ : 各軸を独立に分解する
+$L_1 \to L_\infty$ : 領域を軸に並行な長方形にする。
+
+### 重み付き計算($L_1$)
+
+$$
+\begin{aligned}
+  F(x)
+  &= \sum_k a_k |k - x| \\
+  &= \sum_{k < x} a_k(x - k)
+  + \sum_{k > x} a_k(k - x) \\
+  &= 2\left(
+  x\sum_{k < x}a_k
+  -\sum_{k < x}k a_k
+  \right)
+  +\sum_k k a_k
+  -x\sum_k a_k
+\end{aligned}
+$$
+
+ここで、累積和を
+
+$$
+S_n=\sum_{k < n} a_k \qquad T=\sum_{k < n} k a_k
+$$
+
+とすると、
+
+$$
+F(x) = 2 (x S_x - T_x) + T_n - x S_n
+$$
+
+こうすることで、$O(1)$ で処理できる。
 
 ## live_library
 
